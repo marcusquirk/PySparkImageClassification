@@ -1,4 +1,8 @@
-# necessary import 
+# necessary import
+import io
+import pandas as pd
+#import tensorflow as tf
+from PIL import Image
 from pyspark.sql import SparkSession
 from pyspark.ml.image import ImageSchema
 from pyspark.sql.functions import lit
@@ -6,14 +10,27 @@ from functools import reduce
 from pyspark.ml.evaluation import MulticlassClassificationEvaluator
 from pyspark.ml.classification import LogisticRegression
 from pyspark.ml import Pipeline
-import sparkdl
+#from tensorflow import keras
+#from tensorflow.keras.applications.resnet50 import ResNet50, preprocess_input
+#from tensorflow.keras.preprocessing.image import img_to_array
+from IPython.display import display
+
+from pyspark.sql.functions import col, pandas_udf, PandasUDFType
 
 # create a spark session
+#from sparkdl import DeepImageFeaturizer
+
 spark = SparkSession.builder.appName('DigitRecog').getOrCreate()
 
 # loaded image
 df = spark.read.format("image").load("./NumtaDB/training-a/", inferSchema = True)
 print('hello')
+images = spark.read.format("binaryFile") \
+  .option("pathGlobFilter", "*.jpg") \
+  .option("recursiveFileLookup", "true") \
+  .load("./NumtaDB/training-a/")
+
+display(images.limit(5))
 df.printSchema()
 
 '''one = read.format("1").withColumn("label", lit(1))
@@ -40,7 +57,7 @@ train, test = df.randomSplit([0.8, 0.2], 42)
 
 # model: InceptionV3
 # extracting feature from images
-featurizer = DeepImageFeaturizer(inputCol="image",
+featurizer = sparkdl.DeepImageFeaturizer(inputCol="image",
                                  outputCol="features",
                                  modelName="InceptionV3")
 
