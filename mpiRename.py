@@ -55,7 +55,7 @@ if rank == 0:
 	for file in allFilesPaths[1]:
 		listFolders.append([file, paths[1]])
 
-	distPaths = distList(listFolders, 4)
+	distPaths = distList(listFolders, size)
 
 	#deal with set 0:
 	for setFolders in distPaths[0]:
