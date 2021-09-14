@@ -28,9 +28,22 @@ comm = MPI.COMM_WORLD
 rank = comm.Get_rank()
 size = comm.Get_size()
 
+
+if rank == 0:
+    path1 = input("First path: ")
+    path2 = input("Second path: ")
+
+else:
+    path1 = None
+    path2 = None
+
+
+path1 = comm.bcast(path1, root=0)
+path2 = comm.bcast(path2, root=0)
+
 if rank == 0:
 
-	paths = ["../birds/archive/train", "../caltechBirds/CUB_200_2011/images"]
+	paths = [path1, path2]
 
 	allFilesPaths = []
 	for path in paths:
@@ -58,16 +71,5 @@ else:
 		standardizeNames(setOfFolders[1], setOfFolders[0])
 
 
-
-
-# mpiexec -np 2 python renameFoldersMpi.py
-
-
-
-
-
-
-
-
-
-
+# command:
+# mpiexec -np 4 python renameFoldersMpi.py
