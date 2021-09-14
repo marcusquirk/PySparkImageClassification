@@ -18,9 +18,9 @@ def divideList(lst, processNum):
     return lst1
 
 
-def birdsInCommon(birdsPath, calPath):
-    allFilesBirds = os.listdir(birdsPath)
-    allFilesCal = os.listdir(calPath)
+def birdsInCommon(path1, path2):
+    allFilesBirds = os.listdir(path1)
+    allFilesCal = os.listdir(path2)
     listAll = []
 
     for f1 in allFilesBirds:
@@ -50,20 +50,30 @@ def combineFiles(filePath1, filePath2):
 comm = MPI.COMM_WORLD
 rank = comm.Get_rank()
 size = comm.Get_size()
-birdsPath = "../birds/archive/train"
-calPath = "../caltechBirds/CUB_200_2011/images"
 
 if rank == 0:
+    path1 = input("First path: ")
+    path2 = input("Second path: ")
+
+else:
+    path1 = None
+    path2 = None
+
+
+path1 = comm.bcast(path1, root=0)
+path2 = comm.bcast(path2, root=0)
+
+if rank ==0:
 
     # get list of matching files:
-    filePairs = birdsInCommon(birdsPath, calPath)
+    filePairs = birdsInCommon(path1, path2)
 
     # divide list of matching files:
     pairsDivided = divideList(filePairs, size)
 
     #deal with set 0:
     for files in pairsDivided[0]:
-        combineFiles(birdsPath, calPath)
+        combineFiles(path1, path2)
 
     # send other sets of files to procs:
     for proc in range(1, size):
@@ -71,12 +81,13 @@ if rank == 0:
 
 
 else:
+
     pairsDivided = comm.recv(source=0)
 
     for setFiles in pairsDivided:
         for file in setFiles:
-            combineFiles(birdsPath, calPath)
+            combineFiles(path1, path2)
 
 
-
-# mpiexec -np 2 python mpiTest.py
+# command:
+# mpiexec -np 2 python mpiCombine.py
