@@ -47,7 +47,7 @@ if __name__ == "__main__":
 
     #Save the model for later use
     modelPipeline = Pipeline(stages=[lrModel]) #LR models can't be saved unless they're in a Pipeline
-    fittedModel = dustin.fit(training)
+    fittedModel = modelPipeline.fit(training)
     fittedModel.write().save("./model")
 
     #End the Spark session
