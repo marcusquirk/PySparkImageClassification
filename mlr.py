@@ -1,3 +1,6 @@
+#Marcus Quirk
+#Dustin Johnson
+
 from pyspark.ml.classification import LogisticRegression
 from pyspark.sql import SparkSession
 from pyspark.ml.util import MLWritable
@@ -5,49 +8,47 @@ from pyspark.ml import Pipeline
 from pyspark.mllib.linalg import Vectors
 
 if __name__ == "__main__":
+    
+    #Create a spark session
+    #The configuration options are necessary to allow the program enough memory (required to combat Java heap space error)
     spark = SparkSession.builder.appName("MulticlassLogisticRegression").config('spark.executor.memory', '60g').config('spark.driver.memory', '59g').config('spark.memory.offHeap.enabled', True).config('spark.memory.offHeap.size', '58g').config('spark.driver.maxResultSize', '57g').getOrCreate()
 
     # Load training data
-    training = spark.read.format("libsvm").load("out.txt")
+    training = spark.read.format("libsvm").load("out.txt") #out.txt is the output from svmMaker
+
+    #We did not have an opportunity to tweak the learning parameters
     lr = LogisticRegression(maxIter=4, regParam=0.3, elasticNetParam=0.8)
 
-    # Fit the model
+    #Fit the model
     lrModel = lr.fit(training)
-
-    # Print the coefficients and intercept for multinomial logistic regression
-    print("Coefficients: \n" + str(lrModel.coefficientMatrix))
-    print("Intercept: " + str(lrModel.interceptVector))
-
-    trainingSummary = lrModel.summary
-    print(type(trainingSummary))
-    print(trainingSummary)
     
-    # Obtain the objective per iteration
-    objectiveHistory = trainingSummary.objectiveHistory
-    print("objectiveHistory:")
-    for objective in objectiveHistory:
-        print(objective)
+    #The next lines produce evaluative statistics and print them to the terminal
+    trainingSummary = lrModel.summary
 
-    # for multiclass, we can inspect metrics on a per-label basis
+    #Precision and recall are some of the most important Machine Learning statistics
+    #This produces precision and recall by label
+    #Precision is the percentage of instances that were correctly identified
     print("Precision by label:")
-    for i, prec in enumerate(trainingSummary.precisionByLabel):
-        print("label %d: %s" % (i, prec))
+    for label, prec in enumerate(trainingSummary.precisionByLabel):
+        print("label %d: %s" % (label, prec))
 
+    #Recall is the percentage of the selected instances that were correct
     print("Recall by label:")
-    for i, rec in enumerate(trainingSummary.recallByLabel):
-        print("label %d: %s" % (i, rec))
+    for label, rec in enumerate(trainingSummary.recallByLabel):
+        print("label %d: %s" % (label, rec))
 
-    accuracy = trainingSummary.accuracy
+    #Print statistics for the whole model
     falsePositiveRate = trainingSummary.weightedFalsePositiveRate
     truePositiveRate = trainingSummary.weightedTruePositiveRate
-    fMeasure = trainingSummary.weightedFMeasure()
     precision = trainingSummary.weightedPrecision
     recall = trainingSummary.weightedRecall
-    print("Accuracy: %s\nFPR: %s\nTPR: %s\nF-measure: %s\nPrecision: %s\nRecall: %s"
-          % (accuracy, falsePositiveRate, truePositiveRate, fMeasure, precision, recall))
+    print("FPR: %s\nTPR: %s\nPrecision: %s\nRecall: %s"
+          % (falsePositiveRate, truePositiveRate, precision, recall))
 
-    dustin = Pipeline(stages=[lrModel])
-    katie = dustin.fit(training)
-    katie.write().save("./model")
+    #Save the model for later use
+    modelPipeline = Pipeline(stages=[lrModel]) #LR models can't be saved unless they're in a Pipeline
+    fittedModel = dustin.fit(training)
+    fittedModel.write().save("./model")
 
+    #End the Spark session
     spark.stop()
