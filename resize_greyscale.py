@@ -5,8 +5,8 @@ import os
 
 
 size = 200,200
-filepath = "./bird_images/train/"
-save_filepath = "./bird_images/train_resized/"
+filepath = "./bird_images/test/"
+save_filepath = "./bird_images/test_resized/"
 directory = pathlib.Path(filepath)
 
 image_list = []

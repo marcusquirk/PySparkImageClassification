@@ -4,14 +4,12 @@ from pyspark.ml.util import MLWritable
 from pyspark.ml import Pipeline
 from pyspark.mllib.linalg import Vectors
 
-
 if __name__ == "__main__":
-    spark = SparkSession.builder.appName("MulticlassLogisticRegression").getOrCreate()
+    spark = SparkSession.builder.appName("MulticlassLogisticRegression").config('spark.executor.memory', '60g').config('spark.driver.memory', '59g').config('spark.memory.offHeap.enabled', True).config('spark.memory.offHeap.size', '58g').config('spark.driver.maxResultSize', '57g').getOrCreate()
 
     # Load training data
-    training = spark.read.format("libsvm").load("sample_data.txt")
-
-    lr = LogisticRegression(maxIter=10, regParam=0.3, elasticNetParam=0.8)
+    training = spark.read.format("libsvm").load("out.txt")
+    lr = LogisticRegression(maxIter=4, regParam=0.3, elasticNetParam=0.8)
 
     # Fit the model
     lrModel = lr.fit(training)

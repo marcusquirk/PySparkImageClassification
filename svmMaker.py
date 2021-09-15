@@ -2,7 +2,7 @@ from pyspark import SparkConf, SparkContext
 from pyspark.sql import SparkSession
 from numpy import frombuffer, uint8, reshape
 from mpi4py import MPI
-
+import os
 
 def ConvertToSVM(row):
     pixelInts = frombuffer(row[0], dtype=uint8)
@@ -18,19 +18,20 @@ def __main__():
     rank = comm.Get_rank()
     size = comm.Get_size()
     outFile = 'out.txt'
-    pathToImages = './images/'
+    pathToImages = './bird_images/train_resized/'
+    bird_species = {specie: index for index, specie in enumerate(os.listdir(pathToImages))}
 
     if rank == 0:
-        spark = SparkSession.builder.appName('please work').getOrCreate()
+        spark = SparkSession.builder.config("spark.executor.memory","16g").config("spark.driver.memory","15g").config("spark.memory.offHeap.enabled",True).config("spark.memory.offHeap.size","14g").config("spark.driver.maxResultSize","13g").appName('svmMaker').getOrCreate()
         context = spark.sparkContext
 
-        df = spark.read.format("image").option("dropInvalid", True).load(pathToImages)
+        df = spark.read.format("image").option("dropInvalid", True).option("recursiveFileLookup",True).load(pathToImages)
         images = df.select('image.data', 'image.origin').collect()
     else:
         images = None
 
     images = comm.bcast(images, root = 0)
-
+    
     partitionSize = len(images)//size
 
     if rank != size-1:
@@ -39,11 +40,12 @@ def __main__():
         images = images[partitionSize*rank:]
 
     lines = map(ConvertToSVM, images)
-
-    with open(outFile, 'a') as file:
-        for line in lines:
-            print(len(line[1]))
-            file.write(str(hash(line[0])) + ' ' + ' '.join(line[1]))
+    file = open(outFile, 'a')
+    for line in lines:
+        file.write(str(bird_species[line[0]]) + ' ' + ' '.join(line[1])+'\n')
+    file.close()
+    print('closed')
+    exit(0)
 
 if __name__ == '__main__':
     __main__()
