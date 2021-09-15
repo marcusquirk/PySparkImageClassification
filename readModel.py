@@ -1,10 +1,20 @@
+#Marcus Quirk
+#Dustin Johnson
+
 from pyspark.sql import SparkSession
 from pyspark.ml.util import MLReader
 from pyspark.ml import PipelineModel
 
-spark=SparkSession.builder.appName('stupid').getOrCreate()
+#Initiate the Spark session
+spark=SparkSession.builder.appName('readModel').getOrCreate()
+
+#Load the trained model and test data
 lrModel = PipelineModel.load('./model')
-testData = spark.read.format("libsvm").load("sample_test_data.txt")
+testData = spark.read.format("libsvm").load("test_data.txt")
+
+#Run the model on the test data
 predictions = lrModel.transform(testData).collect()
-preds = [x['prediction'] for x in predictions]
+
+#Print the predicted class for each entry in the test data
+preds = [pred['prediction'] for pred in predictions]
 print(preds)
