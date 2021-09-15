@@ -10,7 +10,7 @@ import os
 def ConvertToSVM(row):
     # cnvert binary to int array
     pixelInts = frombuffer(row[0], dtype=uint8)
-    convertedData = [str(v+1) + ':' + str(k) for v, k in enumerate(pixelInts)]
+    convertedData = [f'{v+1)}:{k}' for v, k in enumerate(pixelInts)]
 
     tagStr = row[1].split('/')[-2]
     return (tagStr, convertedData)
@@ -21,6 +21,7 @@ def __main__():
     rank = comm.Get_rank()
     size = comm.Get_size()
 
+    #hardcoded file paths can be changed to match specific file
     outFile = 'out.txt'
     pathToImages = './bird_images/train_resized/'
     # dict mapping bir specie to ints for tag in final file
@@ -54,7 +55,8 @@ def __main__():
     try:
         file = open(outFile, 'a')
         for line in lines:
-            file.write(str(bird_species[line[0]]) + ' ' + ' '.join(line[1])+'\n')
+            
+            file.write(f'{bird_species[line[0]]} {" ".join(line[1])}\n')
         file.close()
     except:
         exit(-1)
